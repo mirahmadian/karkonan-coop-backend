@@ -1,10 +1,63 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>پروفایل</title>
+    <title>تکمیل پروفایل</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: linear-gradient(to left, #009688, #26a69a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        form {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            direction: rtl;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.7rem;
+            background-color: #009688;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background-color: #00796b;
+        }
+    </style>
 </head>
 <body>
-    <h1>فرم پروفایل</h1>
+
+<form method="post">
+    <h2>تکمیل پروفایل</h2>
+    <input type="text" name="name" placeholder="نام و نام خانوادگی" required>
+    <input type="text" name="national_code" placeholder="کد ملی" required>
+    <input type="text" name="phone" placeholder="شماره تلفن ثابت">
+    <button type="submit">ثبت اطلاعات</button>
+</form>
+
 </body>
 </html>
