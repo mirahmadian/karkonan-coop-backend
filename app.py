@@ -1,38 +1,34 @@
-from flask import Flask, request, jsonify
-import requests
+from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-API_URL = "https://api.fast-creat.ir/sms"
-API_KEY = "1807093505:gKP98hHmnoGXTx0@SenatorApiBot"
-TEMPLATE_ID = "1610182413"
+# صفحه اصلی یا صفحه ورود (index.html)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route("/send-otp", methods=["POST"])
-def send_otp():
-    data = request.json
-    phone = data.get("phone")
-    code = data.get("code")
+# اگر صفحه ورود جدا دارید (مثال)
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # دریافت شماره موبایل یا اطلاعات فرم
+        mobile = request.form.get('mobile')
+        # اینجا می‌توانید منطق ارسال کد تایید یا اعتبارسنجی را اضافه کنید
+        
+        # فعلا فقط هدایت به صفحه پروفایل (یا هر مسیر دیگر)
+        return redirect(url_for('profile'))
+    return render_template('login.html')
 
-    if not phone or not code:
-        return jsonify({"success": False, "message": "Phone or code missing"}), 400
+# صفحه پروفایل (profile.html)
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if request.method == 'POST':
+        # دریافت داده های فرم پروفایل
+        name = request.form.get('name')
+        # ذخیره یا پردازش اطلاعات
+        
+        return "اطلاعات پروفایل ذخیره شد."
+    return render_template('profile.html')
 
-    params = {
-        "apikey": API_KEY,
-        "type": "private",
-        "code": code,
-        "phone": phone,
-        "template": TEMPLATE_ID
-    }
-
-    response = requests.get(API_URL, params=params)
-
-    try:
-        result = response.json()
-    except:
-        result = response.text
-
-    return jsonify({"success": True, "api_response": result})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
