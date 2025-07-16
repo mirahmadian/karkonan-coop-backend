@@ -2,60 +2,138 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>ورود</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به سامانه تعاونی</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.20/dist/full.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/vazirmatn@latest/index.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            background: linear-gradient(to left, #3f51b5, #5c6bc0);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        form {
-            background: white;
-            padding: 2rem;
-            border-radius: 1rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            width: 300px;
-            text-align: center;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            direction: ltr;
-        }
-
-        button {
-            width: 100%;
-            padding: 0.7rem;
-            background-color: #3f51b5;
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        button:hover {
-            background-color: #303f9f;
-        }
+        body { font-family: Vazirmatn, sans-serif; background: linear-gradient(to right, #a8e6cf, #dcedc1); }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6">ورود به سامانه تعاونی</h1>
+        
+        <div id="step-1">
+            <label class="block mb-2 font-semibold">کد ملی خود را وارد کنید:</label>
+            <input type="text" id="nationalIdInput" class="input input-bordered w-full mb-4" placeholder="مثال: 0012345678" maxlength="10">
 
-<form method="post" action="/">
-    <h2>ورود با شماره موبایل</h2>
-    <input type="text" name="mobile" placeholder="شماره موبایل" required>
-    <button type="submit">ارسال کد تایید</button>
-</form>
+            <label class="block mb-2 font-semibold">شماره موبایل خود را وارد کنید:</label>
+            <input type="tel" id="phoneInput" class="input input-bordered w-full mb-4" placeholder="مثال: 09123456789" maxlength="11">
+            
+            <button id="sendCodeBtn" onclick="generateLink()" class="btn btn-success w-full">ادامه</button>
+            <p id="msg" class="text-sm text-red-500 mt-2 text-center"></p>
+        </div>
 
+        <div id="step-2" class="hidden">
+            <div class="text-center mb-4 leading-loose text-gray-800">
+                <p>برای دریافت کد تایید، <a id="baleLink" href="#" target="_blank" class="link link-primary font-bold">اینجا</a> را کلیک نموده و منتظر بمانید.</p>
+                <p class="text-sm mt-1">کد تایید در پیام رسان بله برای شما ارسال می شود.</p>
+            </div>
+            <label class="block mb-2 font-semibold text-gray-800">کد تایید دریافت شده را وارد کنید:</label>
+            <input type="text" id="otpInput" class="input input-bordered w-full mb-4 text-center font-bold text-lg tracking-[.25em]" maxlength="5" placeholder="- - - - -">
+            
+            <button id="verifyBtn" onclick="verifyOtp()" class="btn btn-primary w-full">تایید و ورود</button>
+            <p id="otp-msg" class="text-sm text-red-500 mt-2 text-center"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- تنظیمات اصلی ---
+        const API_BACKEND_URL = "https://tavonibot.onrender.com";
+        const BALE_BOT_USERNAME = "TavoniBot"; // این نام کاربری را قبلا تصحیح کردیم
+
+        let currentNationalId = "";
+
+        async function generateLink() {
+            const nationalId = document.getElementById('nationalIdInput').value.trim();
+            const phone = document.getElementById('phoneInput').value.trim();
+            const msgEl = document.getElementById('msg');
+            const sendBtn = document.getElementById('sendCodeBtn');
+            
+            msgEl.textContent = '';
+            currentNationalId = nationalId;
+
+            if (!/^\d{10}$/.test(nationalId) || !/^09\d{9}$/.test(phone)) {
+                msgEl.textContent = "لطفاً کد ملی و شماره موبایل را به درستی وارد کنید.";
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'لطفاً صبر کنید...';
+
+            try {
+                const response = await fetch(`${API_BACKEND_URL}/generate-linking-token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ national_id: nationalId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const linkingToken = result.linking_token;
+                    const baleLinkEl = document.getElementById('baleLink');
+                    baleLinkEl.href = `https://ble.ir/${BALE_BOT_USERNAME}?start=${linkingToken}`;
+                    
+                    document.getElementById('step-1').classList.add('hidden');
+                    document.getElementById('step-2').classList.remove('hidden');
+                } else {
+                    msgEl.textContent = result.error || 'خطایی از سمت سرور رخ داد.';
+                }
+
+            } catch (error) {
+                console.error('Fetch Error:', error);
+                msgEl.textContent = 'خطا در برقراری ارتباط با سرور.';
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'ادامه';
+            }
+        }
+
+        async function verifyOtp() {
+            const otpCode = document.getElementById('otpInput').value.trim();
+            const otpMsgEl = document.getElementById('otp-msg');
+            const verifyBtn = document.getElementById('verifyBtn');
+
+            otpMsgEl.textContent = '';
+
+            if (!/^\d{5}$/.test(otpCode)) {
+                otpMsgEl.textContent = "کد تایید باید ۵ رقم باشد.";
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'در حال بررسی...';
+
+            try {
+                const response = await fetch(`${API_BACKEND_URL}/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        national_id: currentNationalId,
+                        otp_code: otpCode
+                    })
+                });
+                
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('ورود موفقیت‌آمیز بود! به زودی به پنل کاربری منتقل می‌شوید.');
+                    // window.location.href = '/dashboard.html';
+                } else {
+                     otpMsgEl.textContent = result.error || "خطای نامشخص."
+                }
+
+            } catch(error) {
+                console.error("Verify Fetch Error:", error);
+                otpMsgEl.textContent = "خطا در ارتباط با سرور."
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'تایید و ورود';
+            }
+        }
+    </script>
 </body>
 </html>
